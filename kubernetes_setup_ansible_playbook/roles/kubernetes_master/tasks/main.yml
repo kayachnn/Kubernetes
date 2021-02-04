@@ -1,0 +1,32 @@
+- name: initialize the cluster
+  become: true
+  shell: kubeadm init --pod-network-cidr=10.244.0.0/16 >> cluster_initialized.txt
+  args:
+      chdir: $HOME
+      creates: cluster_initalized.txt
+
+
+- name: create .kube directory
+  become: yes
+  become_user: ansible
+  file:
+      path: $HOME/.kube
+      state: directory
+      mode: 0755
+
+
+- name: copy admin.conf to user's kube config
+  copy:
+      src: /etc/kubernetes/admin.conf
+      dest: /home/ansible/.kube/config
+      remote_src: yes
+      owner: ansible
+
+- name: install pod network
+  become: yes
+  become_user: ansible
+  shell: kubectl apply -f https://docs.projectcalico.org/manifests/tigera-operator.yaml >> pod_network_setup.txt
+  args:
+      chdir: $HOME
+      creates: pod_network_setup.txt
+

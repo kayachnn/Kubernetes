@@ -1,0 +1,5 @@
+- name: update and upgrade server
+  apt:
+     update_cache: true
+     upgrade: dist
+  when: ansible_distribution == "Ubuntu"

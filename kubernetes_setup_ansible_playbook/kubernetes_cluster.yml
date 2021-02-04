@@ -1,0 +1,45 @@
+---
+
+- hosts: all
+  become: true
+  roles:
+          - base
+
+
+- hosts: all
+  become: true
+  roles:
+          - install_kubelet_kubeadm_kubectl
+           
+
+- hosts: kubernetesMasters
+  become: true
+  become_user: root
+  roles:
+          - kubernetes_master 
+            
+
+
+- hosts: kubernetesMasters
+  become: yes
+  gather_facts: false
+  tasks:
+          - name: get join command
+            shell: kubeadm token create --print-join-command
+            register: join_command
+
+
+          - name: copy join command to local file
+            become: false
+            local_action: "copy content='{{ join_command.stdout_lines[0] }}' dest=/tmp/join-command"
+
+- hosts: kubernetesWorkers
+  become: yes
+  tasks:
+          - name: copy the join command to server location
+            copy:
+                    src: /tmp/join-command
+                    dest: /tmp/join-command.sh 
+                    mode: 0777
+          - name: join the node to cluster
+            command: sh /tmp/join-command.sh
