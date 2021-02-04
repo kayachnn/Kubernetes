@@ -83,3 +83,14 @@
   become: true
   become_user: root
   shell: sysctl --system
+
+
+- name: remove swap from /etc/fswap
+  become: true
+  shell: sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab 
+
+- name: Disable swap
+  become: true
+  shell: swapoff -a
+  when: ansible_swaptotal_mb > 0
+
