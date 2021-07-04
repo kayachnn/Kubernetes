@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana-opendistro
+  namespace: elasticsearch-opendistro
+spec:
+  selector:
+    matchLabels:
+      app: kibana-opendistro
+  template:
+    metadata:
+      labels:
+        app: kibana-opendistro
+    spec:
+      containers:
+        - name: kibana-opendistro
+          image: amazon/opendistro-for-elasticsearch-kibana:1.13.0
+          env:
+            - name: ELASTICSEARCH_URL
+              value: https://elasticsearch-opendistro.elasticsearch-opendistro:9200
+            - name: ELASTICSEARCH_USERNAME
+              value: admin
+            - name: ELASTICSEARCH_PASSWORD
+              value: admin
+          ports:
+            - containerPort: 5601
+              name: http
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /usr/share/kibana/config/kibana.yml
+              name: config
+              subPath: kibana.yml
+      volumes:
+        - name: config
+          configMap:
+            name: kibana-opendistro-configmap
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kibana-opendistro-service
+  namespace: elasticsearch-opendistro
+  labels:
+    app: kibana-opendistro-service
+spec:
+  type: NodePort
+  selector:
+    app: kibana-opendistro
+  ports:
+    - name: http
+      port: 5601
+      protocol: TCP
+      targetPort: 5601
